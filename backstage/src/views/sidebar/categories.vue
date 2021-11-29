@@ -1,6 +1,6 @@
 <template>
-    <div class="box">
-        <router-view></router-view>
+    <div>
+
     </div>
 </template>
 
@@ -24,8 +24,5 @@ export default {
 </script>
 
 <style scoped lang="scss">
-    .box{
-        width: 100%;
-        height: 100%;
-    }
+
 </style>
