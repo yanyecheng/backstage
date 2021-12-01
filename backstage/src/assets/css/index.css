@@ -17,3 +17,24 @@ body {
 .icoo {
     font-size: 18px !important;
 }
+
+ .el-table td.el-table__cell>div {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.centerRow{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.centerRow div:nth-child(1) {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
+.centerRow div:nth-child(2) {
+    margin: 10px 0;
+}

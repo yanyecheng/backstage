@@ -1,12 +1,18 @@
 <template>
   <div class="box">
-    <p>
-      <span class="xz">首页</span>><span>用户管理</span>><span>用户列表</span>
-    </p>
+    <el-breadcrumb separator-class="el-icon-arrow-right">
+      <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item>用户管理</el-breadcrumb-item>
+      <el-breadcrumb-item>用户列表</el-breadcrumb-item>
+    </el-breadcrumb>
 
     <div class="box-bot">
       <el-input placeholder="请输入内容" v-model="input1" class="inp_" />
-      <el-button type="primary" class="but_ el-icon-search"></el-button>
+      <el-button
+        type="primary"
+        class="but_ el-icon-search"
+        @click="search"
+      ></el-button>
       <el-button type="primary" @click="mb = true">添加用户</el-button>
 
       <el-dialog
@@ -110,11 +116,12 @@
               v-model="list.row.mg_state"
               active-color="#13ce66"
               inactive-color="#ff4949"
+              @change="change(list.row)"
             >
             </el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="180">
           <template slot-scope="scope">
             <el-button
               size="mini"
@@ -122,6 +129,31 @@
               class="el-icon-edit"
               @click="handleEdit(scope.$index, scope.row)"
             ></el-button>
+            <el-dialog
+              title="修改用户"
+              :visible.sync="xiu"
+              width="40%"
+              :before-close="handleCloses"
+            >
+              <div class="mb-div">
+                <span>用户名：</span>
+                <el-input v-model="yhm" :disabled="true"> </el-input>
+              </div>
+              <div class="mb-div">
+                <span>邮箱：</span>
+                <el-input placeholder="请输入邮箱" v-model="yx" clearable>
+                </el-input>
+              </div>
+              <div class="mb-div">
+                <span>手机：</span>
+                <el-input placeholder="请输入手机号" v-model="sj" clearable>
+                </el-input>
+              </div>
+              <span slot="footer" class="dialog-footer">
+                <el-button @click="xiu = false">取 消</el-button>
+                <el-button type="primary" @click="xiug">确 定</el-button>
+              </span>
+            </el-dialog>
             <el-button
               class="el-icon-delete-solid"
               size="mini"
@@ -134,6 +166,26 @@
               class="el-icon-s-help"
               @click="jurisdiction(scope.$index, scope.row)"
             ></el-button>
+            <el-dialog
+              title="分配角色"
+              :visible.sync="fp"
+              width="40%"
+              :before-close="handleCloses"
+            >
+              <div class="mb-div">
+                <span>当前的用户名：{{ yhm }}</span>
+              </div>
+              <div class="mb-div">
+                <span>当前的角色：</span>
+              </div>
+              <div class="mb-div">
+                <span>手机：</span>
+              </div>
+              <span slot="footer" class="dialog-footer">
+                <el-button @click="fp = false">取 消</el-button>
+                <el-button type="primary" @click="fp = false">确 定</el-button>
+              </span>
+            </el-dialog>
           </template>
         </el-table-column>
       </el-table>
@@ -199,6 +251,13 @@ export default {
       }
     };
     return {
+      fp: false,
+      name: [],
+      id_: null,
+      sj: null,
+      yx: "",
+      yhm: "",
+      xiu: false,
       mb: false,
       list: [],
       input1: "",
@@ -220,6 +279,76 @@ export default {
     };
   },
   methods: {
+    search() {
+      http({
+        url: "/users",
+        params: {
+          pagenum: 1,
+          pagesize: this.zs,
+        },
+      }).then((res) => {
+        for (let i = 0; i < res.data.users.length; i++) {
+          this.name.push(res.data.users[i].username);
+        }
+        console.log(this.name);
+        var index = this.name.indexOf(this.input1);
+        console.log(index);
+        if (index == -1) {
+          this.$message.error("暂没有查到当前用户名");
+          this.name = [];
+        } else {
+          http({
+            url: `users/${res.data.users[index].id}`,
+          }).then((res) => {
+            console.log(res);
+            this.list = [];
+            this.list.push(res.data);
+            this.name = [];
+          });
+        }
+      });
+    },
+    xiug() {
+      console.log(this.id_);
+      this.xiu = false;
+      http({
+        url: `users/${this.id_}`,
+        method: "put",
+        data: {
+          email: this.yx,
+          mobile: this.sj,
+        },
+      }).then((res) => {
+        console.log(res);
+        this.$message({
+          message: res.meta.msg,
+          type: "success",
+        });
+        http({
+          url: "/users",
+          params: {
+            pagenum: this.dqy,
+            pagesize: this.my,
+          },
+        }).then((res) => {
+          this.list = res.data.users;
+          this.zs = res.data.total;
+        });
+      });
+    },
+    change(v) {
+      console.log(v);
+      http({
+        url: `/users/${v.id}/state/${v.mg_state}`,
+        method: "put",
+      }).then((res) => {
+        console.log(res);
+        this.$message({
+          message: res.meta.msg,
+          type: "success",
+        });
+      });
+    },
     add() {
       http({
         url: "/users",
@@ -250,7 +379,6 @@ export default {
           pagesize: val,
         },
       }).then((res) => {
-        
         this.list = res.data.users;
       });
     },
@@ -270,6 +398,11 @@ export default {
     },
     handleEdit(index, row) {
       console.log(index, row);
+      this.xiu = true;
+      this.yhm = row.username;
+      this.yx = row.email;
+      this.sj = row.mobile;
+      this.id_ = row.id;
     },
     handleDelete(index, row) {
       this.$confirm("此操作将永久删除该用户, 是否继续?", "提示", {
@@ -280,14 +413,14 @@ export default {
         .then(() => {
           console.log(row.id);
           http({
-            url:`users/${row.id}`,
-            method:'delete'
-          }).then((res)=>{
-             this.$message({
-             type: "success",
-             message: res.meta.msg,
+            url: `users/${row.id}`,
+            method: "delete",
+          }).then((res) => {
+            this.$message({
+              type: "success",
+              message: res.meta.msg,
+            });
           });
-          })
         })
         .catch(() => {
           this.$message({
@@ -298,8 +431,19 @@ export default {
     },
     jurisdiction(index, row) {
       console.log(index, row);
+      this.fp = true;
     },
     handleClose(done) {
+      this.$confirm("确认关闭？")
+        .then((res) => {
+          console.log(res);
+          done();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    handleCloses(done) {
       this.$confirm("确认关闭？")
         .then((res) => {
           console.log(res);
@@ -318,6 +462,7 @@ export default {
         pagesize: 5,
       },
     }).then((res) => {
+      console.log(res);
       this.list = res.data.users;
       this.zs = res.data.total;
     });
@@ -327,6 +472,22 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.el-button--danger {
+  margin-left: 10px;
+}
+.mb-div {
+  display: flex;
+  margin-top: 20px;
+  div {
+    padding-left: 10px;
+  }
+  span {
+    display: block;
+    width: 70px;
+    text-align: right;
+    line-height: 40px;
+  }
+}
 .inp_ {
   width: 250px;
   margin-right: 20px;
