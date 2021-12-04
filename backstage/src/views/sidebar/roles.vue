@@ -162,15 +162,15 @@
                 show-checkbox
                 node-key="id"
                 :props="defaultProps"
-                :default-expand-all = brz
-                :default-checked-keys = list_num
+                :default-expand-all="brz"
+                :default-checked-keys="list_num"
+                :check-on-click-node="brz"
+                ref="tree"
               >
               </el-tree>
               <span slot="footer" class="dialog-footer">
                 <el-button @click="dialogVisibled = false">取 消</el-button>
-                <el-button type="primary" @click="fp(list.row)"
-                  >确 定</el-button
-                >
+                <el-button type="primary" @click="fp(list.row)">确 定</el-button>
               </span>
             </el-dialog>
           </template>
@@ -186,8 +186,11 @@ export default {
   props: {},
   data() {
     return {
-      list_num:[],
-      brz:true,
+      id:null,
+      checkedKeyArr: [],
+      checkedKeyStr: [],
+      list_num: [],
+      brz: true,
       input: "",
       input1: "",
       input2: "",
@@ -205,31 +208,38 @@ export default {
     };
   },
   methods: {
-    qxlb(v){
-      this.dialogVisibled = true
-      this.list_num = []
-      for(let i = 0 ; i < v.children.length ; i++){
-        for(let s = 0 ; s < v.children[i].children.length ; s++){
-          for(let b = 0 ; b < v.children[i].children[s].children.length ; b++){
-            this.list_num.push(v.children[i].children[s].children[b].id)
-            console.log(this.list_num);
+    qxlb(v) {
+      this.id = v.id
+      this.dialogVisibled = true;
+      this.list_num = [];
+      for (let i = 0; i < v.children.length; i++) {
+        for (let s = 0; s < v.children[i].children.length; s++) {
+          for (let b = 0; b < v.children[i].children[s].children.length; b++) {
+            this.list_num.push(v.children[i].children[s].children[b].id);
           }
         }
       }
-      console.log(v);
       http({
-        url:'rights/tree'
-      }).then((res)=>{
-        console.log(res);
-        this.data = res.data
-      })
+        url: "rights/tree",
+      }).then((res) => {
+        this.data = res.data;
+      });
     },
-    fp(v) {
-      console.log(v);
-      // http({
-      //   url: "roles/:roleId/rights",
-      //   method: "post",
-      // });
+    fp() {
+      const arr1 = this.$refs.tree.getCheckedKeys();
+      const arr2 = this.$refs.tree.getHalfCheckedKeys();
+      const rids = [...arr1, ...arr2].join(",");
+      console.log(this.id);
+      http({
+        url:`roles/${this.id -0}/rights`,
+        method: "post",
+        data:{
+          rids:rids
+        }
+      }).then((res)=>{
+        this.dialogVisibled = false
+        console.log(res);
+      })
     },
     bj(v) {
       http({
