@@ -3,7 +3,7 @@ import axios from 'axios'
 export default function (config) {
     //
     const myaxios = axios.create({
-        baseURL: 'http://192.168.1.61:8888/api/private/v1',
+        baseURL: 'http://192.168.124.61:8888/api/private/v1',
         timeout: 50000,
     })
     // process.env.VUE_APP_BASE_URL
